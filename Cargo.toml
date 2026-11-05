@@ -39,11 +39,13 @@ strip = true
 # shaders Hex's models use (see `CMAKE_ARGS` in .cargo/config.toml),
 # Parakeet's vocabulary rescoring (branch hex/parakeet-vocabulary), and a Metal
 # residency heartbeat that sleeps once its keep-alive runs out (branch
-# hex/metal-idle-residency). Drop this once a transcribe.cpp release carries
-# them.
+# hex/metal-idle-residency). The pin is ajbarryiii/transcribe.cpp's kea-b-base
+# branch: those commits plus Q1_0 weights for binarized Parakeet checkpoints
+# (pre-quantized Q1_0 linears and conformer pointwise kernels). Drop this once
+# a transcribe.cpp release carries them.
 [patch.crates-io]
-transcribe-cpp = { git = "https://github.com/anomalyco/transcribe.cpp", rev = "2778ae4bf5ca5f394d129a39467f4ad9552dc34f" }
-transcribe-cpp-sys = { git = "https://github.com/anomalyco/transcribe.cpp", rev = "2778ae4bf5ca5f394d129a39467f4ad9552dc34f" }
+transcribe-cpp = { git = "https://github.com/ajbarryiii/transcribe.cpp", rev = "6de080165e447600d264e8c419277570c36bacac" }
+transcribe-cpp-sys = { git = "https://github.com/ajbarryiii/transcribe.cpp", rev = "6de080165e447600d264e8c419277570c36bacac" }
 
 [dependencies]
 clap = { version = "4.6.7", features = ["derive"] }

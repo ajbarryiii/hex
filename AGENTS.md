@@ -173,7 +173,7 @@ substitute for source inspection or a second roadmap.
   memory, and benchmarks the publisher (never Hex) measured (Parakeet Ultra).
 - `transcription/custom_models`, `transcription/gguf_header`: your own speech
   models: GGUF imports checked from their header alone (family, variant,
-  languages, F32/F16/Q8_0 tensors), copied into `models/custom/` under their
+  languages, F32/F16/Q8_0/Q1_0 tensors), copied into `models/custom/` under their
   SHA-256 with a receipt and manifest (or recorded in place for a found file),
   `TranscriptionModelId::Custom` IDs, and the default-model fallback for an
   import that can't run.
@@ -1698,7 +1698,8 @@ ARM64 host). Builds use `-DGGML_NATIVE=OFF` so the CPU kernels stay portable,
 and the static runtime in `.cargo/config.toml` keeps the Visual C++
 Redistributable unnecessary; the release workflow asserts neither Windows
 executable imports it. Every build embeds Vulkan shaders only for f32, f16,
-q8_0, and q5_0 (NB-Whisper Medium) tensors and no MUL_MAT_ID (`CMAKE_ARGS` in
+q8_0, q5_0 (NB-Whisper Medium), and q1_0 (imported binarized models) tensors
+and no MUL_MAT_ID (`CMAKE_ARGS` in
 `.cargo/config.toml`, through the patched `transcribe-cpp-sys` in
 `Cargo.toml`) instead of every type. ggml aborts a Vulkan run whose weights
 use another type, so widen `GGML_VULKAN_SHADER_TYPES` before the catalog

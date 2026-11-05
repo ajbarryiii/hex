@@ -16,9 +16,10 @@ Picker header -> "Add model file…" -> native dialog (GGUF, All files)   // set
 │   gigaam (any other, e.g. llama.cpp's or SenseVoice.cpp's `sensevoice-small`,
 │   says the file was made for another program and needs a transcribe.cpp
 │   conversion, or the catalog's download; #1299);
-│   stt.variant; general.languages with a code Hex knows; only F32, F16, and
-│   Q8_0 tensors (the types every build runs on Metal and Vulkan); the tensor
-│   data fits the file. Anything else -> "<file> can't be imported: <reason>"
+│   stt.variant; general.languages with a code Hex knows; only F32, F16, Q8_0,
+│   and Q1_0 (binarized) tensors (the types every build runs on Metal and
+│   Vulkan); the tensor data fits the file.
+│   Anything else -> "<file> can't be imported: <reason>"
 ├── Copy -> models/custom/<16 hex>.gguf while hashing; the copy is checked again;
 │   receipt <16 hex>.gguf.verified.json (size, SHA-256, mtime, inode where
 │   the OS reports one, never the volume's device number, which macOS can
@@ -101,7 +102,7 @@ Picker opens, or onboarding starts -> one scan (found_models::scan)   // setup.f
 │   -> that catalog model counts as downloaded; its card says "Found on this
 │   computer" and offers Use, never Download
 ├── Other compatible files -> "Found on this computer" at the top of the picker:
-│   name · Not tested by Hex · Q8_0/F16/F32 · owner/name@revision · languages,
+│   name · Not tested by Hex · Q1_0/Q8_0/F16/F32 · owner/name@revision · languages,
 │   "It may be too big for this computer's GPU memory." when the tensor data
 │   plus a quarter exceeds the largest GPU transcribe.cpp reports, and
 │   "Compatible doesn't mean accurate: …"

@@ -14,9 +14,11 @@ rustflags = ["-C", "target-feature=+crt-static"]
 # ignore this define.
 #
 # Every catalog model stores only f32, f16, q8_0, and (NB-Whisper Medium's
-# whisper.cpp file) q5_0 tensors and none uses MUL_MAT_ID, so the Vulkan
-# backend embeds shaders for just those instead of every type. ggml aborts a Vulkan run whose weights use any
+# whisper.cpp file) q5_0 tensors and none uses MUL_MAT_ID; imports may also
+# hold q1_0 (binarized checkpoints; `SUPPORTED_TENSOR_TYPES` in
+# src/transcription/gguf_header.rs). The Vulkan backend embeds shaders for just
+# those instead of every type. ggml aborts a Vulkan run whose weights use any
 # other type, so add a type here before the catalog gains a model that needs it
 # (`gguf_artifacts_are_q8_0_for_the_vulkan_shader_subset` guards the catalog).
 [env]
-CMAKE_ARGS = "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DGGML_VULKAN_SHADER_TYPES=f32,f16,q8_0,q5_0 -DGGML_VULKAN_MUL_MAT_ID=OFF"
+CMAKE_ARGS = "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DGGML_VULKAN_SHADER_TYPES=f32,f16,q8_0,q5_0,q1_0 -DGGML_VULKAN_MUL_MAT_ID=OFF"

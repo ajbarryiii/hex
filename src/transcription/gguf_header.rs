@@ -19,8 +19,10 @@ const MAX_DIMS: u32 = 8;
 const DEFAULT_ALIGNMENT: u64 = 32;
 
 /// The ggml tensor types every Hex build runs on Metal and on Vulkan (the
-/// Linux and Windows builds embed Vulkan shaders for these alone).
-pub(crate) const SUPPORTED_TENSOR_TYPES: [(u32, &str); 3] = [(0, "F32"), (1, "F16"), (8, "Q8_0")];
+/// Linux and Windows builds embed Vulkan shaders for these alone). Q1_0 is
+/// binarized checkpoints' one sign bit per weight.
+pub(crate) const SUPPORTED_TENSOR_TYPES: [(u32, &str); 4] =
+    [(0, "F32"), (1, "F16"), (8, "Q8_0"), (41, "Q1_0")];
 
 /// What an import needs from the header.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -248,6 +250,8 @@ fn tensor_bytes(kind: u32, elements: u64) -> Option<u64> {
         1 => elements.checked_mul(2),
         // 32 values in 34 bytes: an f16 scale and 32 int8s.
         8 => elements.div_ceil(32).checked_mul(34),
+        // 128 values in 18 bytes: an f16 scale and 128 sign bits.
+        41 => elements.div_ceil(128).checked_mul(18),
         _ => None,
     }
 }
@@ -258,9 +262,16 @@ fn type_name(kind: u32) -> String {
         "Q3_K", "Q4_K", "Q5_K", "Q6_K", "Q8_K", "IQ2_XXS", "IQ2_XS", "IQ3_XXS", "IQ1_S", "IQ4_NL",
         "IQ3_S", "IQ2_S", "IQ4_XS", "I8", "I16", "I32", "I64", "F64", "IQ1_M", "BF16",
     ];
-    NAMES
-        .get(kind as usize)
-        .map_or_else(|| format!("type {kind}"), |name| (*name).to_owned())
+    let name = match kind {
+        34 => Some("TQ1_0"),
+        35 => Some("TQ2_0"),
+        39 => Some("MXFP4"),
+        40 => Some("NVFP4"),
+        41 => Some("Q1_0"),
+        42 => Some("Q2_0"),
+        kind => NAMES.get(kind as usize).copied(),
+    };
+    name.map_or_else(|| format!("type {kind}"), str::to_owned)
 }
 
 #[cfg(test)]
@@ -357,9 +368,46 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn binarized_q1_0_tensors_are_supported_and_their_data_counted() {
+        // A binarized Parakeet: F32 norms, Q8_0 embeddings, Q1_0 linears.
+        let header = read_bytes(gguf(
+            &[("general.architecture", "parakeet")],
+            &[],
+            &[],
+            &[("a", 0, 8), ("b", 8, 64), ("c", 41, 1024), ("d", 41, 256)],
+        ))
+        .unwrap();
+        assert_eq!(header.tensor_types, [(0, 1), (8, 1), (41, 2)].into());
+        assert!(header.unsupported_tensor_types().is_empty());
+        // Q1_0 packs 128 values in 18 bytes. The fixture pads each tensor to
+        // 32 bytes, so `d` starts after 32 + 96 + 160 (1024 values, 144
+        // bytes) and ends 36 bytes later.
+        assert_eq!(header.tensor_bytes, 288 + 36);
+        let mut cut = gguf(
+            &[("general.architecture", "parakeet")],
+            &[],
+            &[],
+            &[("a", 41, 128 * 64)],
+        );
+        cut.truncate(cut.len() - 100);
+        assert!(
+            read_bytes(cut).is_err(),
+            "Q1_0 data counts toward the file's length"
+        );
+    }
+
+    #[test]
     fn other_tensor_types_are_named() {
         let header = read_bytes(gguf(&[], &[], &[], &[("a", 12, 256), ("b", 12, 256)])).unwrap();
         assert_eq!(header.unsupported_tensor_types(), ["Q4_K (2)"]);
+        let newer = read_bytes(gguf(&[], &[], &[], &[("a", 42, 256), ("b", 39, 256)])).unwrap();
+        assert_eq!(newer.unsupported_tensor_types(), ["MXFP4 (1)", "Q2_0 (1)"]);
+        assert_eq!(
+            read_bytes(gguf(&[], &[], &[], &[("a", 99, 256)]))
+                .unwrap()
+                .unsupported_tensor_types(),
+            ["type 99 (1)"]
+        );
     }
 
     #[test]

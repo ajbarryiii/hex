@@ -6319,7 +6319,7 @@ dependencies = [
 [[package]]
 name = "transcribe-cpp"
 version = "0.4.1"
-source = "git+https://github.com/ajbarryiii/transcribe.cpp?rev=6de080165e447600d264e8c419277570c36bacac#6de080165e447600d264e8c419277570c36bacac"
+source = "git+https://github.com/ajbarryiii/transcribe.cpp?rev=e29446cf050736210fb4c1024acbd0f94fcb594b#e29446cf050736210fb4c1024acbd0f94fcb594b"
 dependencies = [
  "log",
  "thiserror 2.0.21",
@@ -6329,7 +6329,7 @@ dependencies = [
 [[package]]
 name = "transcribe-cpp-sys"
 version = "0.4.1"
-source = "git+https://github.com/ajbarryiii/transcribe.cpp?rev=6de080165e447600d264e8c419277570c36bacac#6de080165e447600d264e8c419277570c36bacac"
+source = "git+https://github.com/ajbarryiii/transcribe.cpp?rev=e29446cf050736210fb4c1024acbd0f94fcb594b#e29446cf050736210fb4c1024acbd0f94fcb594b"
 dependencies = [
  "cmake",
  "serde_json",

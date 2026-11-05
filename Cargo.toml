@@ -41,11 +41,13 @@ strip = true
 # residency heartbeat that sleeps once its keep-alive runs out (branch
 # hex/metal-idle-residency). The pin is ajbarryiii/transcribe.cpp's kea-b-base
 # branch: those commits plus Q1_0 weights for binarized Parakeet checkpoints
-# (pre-quantized Q1_0 linears and conformer pointwise kernels). Drop this once
-# a transcribe.cpp release carries them.
+# (pre-quantized Q1_0 linears and conformer pointwise kernels) and the per-frame
+# INT8 input quantization a GGUF asks for with
+# `stt.parakeet.encoder.input_quant` (kea-b). Drop this once a transcribe.cpp
+# release carries them.
 [patch.crates-io]
-transcribe-cpp = { git = "https://github.com/ajbarryiii/transcribe.cpp", rev = "6de080165e447600d264e8c419277570c36bacac" }
-transcribe-cpp-sys = { git = "https://github.com/ajbarryiii/transcribe.cpp", rev = "6de080165e447600d264e8c419277570c36bacac" }
+transcribe-cpp = { git = "https://github.com/ajbarryiii/transcribe.cpp", rev = "e29446cf050736210fb4c1024acbd0f94fcb594b" }
+transcribe-cpp-sys = { git = "https://github.com/ajbarryiii/transcribe.cpp", rev = "e29446cf050736210fb4c1024acbd0f94fcb594b" }
 
 [dependencies]
 clap = { version = "4.6.7", features = ["derive"] }

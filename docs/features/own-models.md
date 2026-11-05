@@ -16,9 +16,10 @@ Picker header -> "Add model file…" -> native dialog (GGUF, All files)   // set
 │   gigaam (any other, e.g. llama.cpp's or SenseVoice.cpp's `sensevoice-small`,
 │   says the file was made for another program and needs a transcribe.cpp
 │   conversion, or the catalog's download; #1299);
-│   stt.variant; general.languages with a code Hex knows; only F32, F16, and
-│   Q8_0 tensors (the types every build runs on Metal and Vulkan); the tensor
-│   data fits the file. Anything else -> "<file> can't be imported: <reason>"
+│   stt.variant; general.languages with a code Hex knows; only F32, F16, Q8_0,
+│   and Q1_0 (binarized) tensors (the types every build runs on Metal and
+│   Vulkan); the tensor data fits the file.
+│   Anything else -> "<file> can't be imported: <reason>"
 ├── Copy -> models/custom/<16 hex>.gguf while hashing; the copy is checked again;
 │   receipt <16 hex>.gguf.verified.json (size, SHA-256, mtime, inode where
 │   the OS reports one, never the volume's device number, which macOS can
@@ -101,7 +102,7 @@ Picker opens, or onboarding starts -> one scan (found_models::scan)   // setup.f
 │   -> that catalog model counts as downloaded; its card says "Found on this
 │   computer" and offers Use, never Download
 ├── Other compatible files -> "Found on this computer" at the top of the picker:
-│   name · Not tested by Hex · Q8_0/F16/F32 · owner/name@revision · languages,
+│   name · Not tested by Hex · Q1_0/Q8_0/F16/F32 · owner/name@revision · languages,
 │   "It may be too big for this computer's GPU memory." when the tensor data
 │   plus a quarter exceeds the largest GPU transcribe.cpp reports, and
 │   "Compatible doesn't mean accurate: …"
@@ -159,6 +160,15 @@ onboarding and picker scenes rendered from that real scan. Earlier, the same
 primeLine file imported by copy transcribed the FLEURS German and English
 samples. Not observed: macOS (Metal) and Windows at all, a plain-copy cache
 without symlinks, and the GPU memory warning on a small GPU.
+
+Observed with Q1_0 (2026-11-04), isolated data folders: Kea-B 0.1
+(`kea-b-0.1-Q1_0.gguf`, a binarized Parakeet-TDT 0.6B v2: 424 F32, 9 Q8_0,
+264 Q1_0 tensors) imported by copy as `custom-c53c8277858d59aa`. On NixOS
+(RTX 5090 over Vulkan) `hex model check` was ready on the GPU and `hex model
+transcribe` gave transcribe.cpp's `jfk.wav` word for word; on an M1 Pro
+(Metal) `hex benchmark-transcription` on the imported copy did the same (WER
+0). Not observed: the window's "Add model file…", Windows, and a found Q1_0
+file in a real Hugging Face cache.
 
 Checks: `transcription::found_models::tests` (scan, cache, catalog match,
 in-place use and forgetting, the full check refusing a mismatched file),

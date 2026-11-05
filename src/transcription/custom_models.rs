@@ -522,8 +522,8 @@ fn profile(header: &GgufHeader, file_name: &str) -> Result<Profile> {
     let unsupported = header.unsupported_tensor_types();
     if !unsupported.is_empty() {
         bail!(
-            "it has {} tensors; Hex runs only F32, F16, and Q8_0 weights on Metal and Vulkan. \
-             Quantize it to Q8_0 with transcribe-quantize",
+            "it has {} tensors; Hex runs only F32, F16, Q8_0, and Q1_0 weights on Metal and \
+             Vulkan. Quantize it to Q8_0 with transcribe-quantize",
             unsupported.join(", ")
         );
     }
@@ -1278,7 +1278,9 @@ mod tests {
             &[],
             &[("a", 12, 256)],
         );
-        assert!(reason(quantized).contains("Q4_K (1) tensors"));
+        let quantized = reason(quantized);
+        assert!(quantized.contains("Q4_K (1) tensors"));
+        assert!(quantized.contains("F32, F16, Q8_0, and Q1_0 weights"));
         let no_languages = gguf(
             &[
                 ("general.architecture", "whisper"),

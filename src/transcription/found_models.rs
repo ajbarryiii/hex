@@ -48,7 +48,7 @@ pub struct Found {
     pub architecture: String,
     pub variant: String,
     pub languages: Vec<String>,
-    /// The quantization most of its weights use: Q8_0, F16, or F32.
+    /// The quantization most of its weights use: Q1_0, Q8_0, F16, or F32.
     pub compression: &'static str,
     /// The tensor data it loads, which estimates the memory it needs.
     pub tensor_bytes: u64,
@@ -305,7 +305,11 @@ fn catalog_match(
 
 fn compression(header: &super::gguf_header::GgufHeader) -> &'static str {
     let count = |kind| header.tensor_types.get(&kind).copied().unwrap_or(0);
-    if count(8) > 0 {
+    // A binarized file keeps a few F32 or Q8_0 tensors beside its Q1_0
+    // weights, which hold nearly all of its parameters.
+    if count(41) > 0 {
+        "Q1_0"
+    } else if count(8) > 0 {
         "Q8_0"
     } else if count(1) > 0 {
         "F16"
@@ -633,6 +637,43 @@ mod tests {
         // A second scan answers unchanged files from the cache.
         assert_eq!(scan_in(&hub), found);
         assert_eq!(snapshot_of(&hub), before, "the cache is never written");
+        fs::remove_dir_all(hub).unwrap();
+    }
+
+    #[test]
+    fn a_binarized_file_is_found_compatible_and_labelled_q1_0() {
+        // F32 norms and a few Q8_0 tensors beside Q1_0 weights, as a
+        // binarized Parakeet keeps them.
+        let hub = temporary("q1_0");
+        let contents = gguf(
+            &[
+                ("general.architecture", "parakeet"),
+                ("general.name", "Kea-B 0.1"),
+                ("stt.variant", "tdt-0.6b-kea-b-0.1"),
+            ],
+            &[("general.languages", &["en"])],
+            &[],
+            &[
+                ("norm", 0, 16),
+                ("embedding", 8, 64),
+                ("encoder.linear", 41, 1024),
+                ("encoder.pointwise", 41, 512),
+            ],
+        );
+        cache(
+            &hub,
+            "someone/kea-b-gguf",
+            "0123456789abcdef",
+            "kea-b-0.1-Q1_0.gguf",
+            &"ab".repeat(32),
+            Some(&contents),
+            0,
+        );
+        let found = scan_in(&hub);
+        assert_eq!(found.len(), 1, "{found:#?}");
+        assert_eq!(found[0].catalog, None);
+        assert_eq!(found[0].name, "Kea-B 0.1");
+        assert_eq!(found[0].compression, "Q1_0");
         fs::remove_dir_all(hub).unwrap();
     }
 
